@@ -13,36 +13,43 @@ class PinScreen extends StatefulWidget {
 
 class _PinScreenState extends State<PinScreen> {
   String _pinIngresado = '';
-  String? _pinGuardado;
-  String? _primerPinCreacion;
-  bool _modoCreacion = false;
-  bool _confirmandoPin = false;
-  String _mensaje = 'Ingresa tu PIN';
+  String? _pinAngie;
+  String? _pinEsposo;
+  String _mensaje = 'Ingresa tu PIN de 4 dígitos';
   bool _error = false;
   bool _cargando = true;
 
   @override
   void initState() {
     super.initState();
-    _verificarPinExistente();
+    _cargarPins();
   }
 
-  Future<void> _verificarPinExistente() async {
+  Future<void> _cargarPins() async {
     final prefs = await SharedPreferences.getInstance();
-    final pin = prefs.getString('pin_seguridad');
+
+    // Migración o carga de PINs
+    var pinAngie = prefs.getString('pin_angie');
+    if (pinAngie == null || pinAngie.isEmpty) {
+      pinAngie = prefs.getString('pin_seguridad'); // Si ya tenía un PIN creado
+      if (pinAngie != null && pinAngie.isNotEmpty) {
+        await prefs.setString('pin_angie', pinAngie);
+      }
+    }
+
+    var pinEsposo = prefs.getString('pin_esposo');
 
     setState(() {
-      _pinGuardado = pin;
+      _pinAngie = pinAngie;
+      _pinEsposo = pinEsposo;
       _cargando = false;
-
-      if (widget.cambiarPin || pin == null || pin.isEmpty) {
-        _modoCreacion = true;
-        _mensaje = 'Crea tu PIN de 4 dígitos';
-      } else {
-        _modoCreacion = false;
-        _mensaje = 'Ingresa tu PIN de seguridad';
-      }
     });
+
+    if (widget.cambiarPin || _pinAngie == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mostrarDialogoConfiguracionPins();
+      });
+    }
   }
 
   void _onNumeroPresionado(String numero) {
@@ -68,56 +75,144 @@ class _PinScreenState extends State<PinScreen> {
   }
 
   Future<void> _procesarPin() async {
-    final prefs = await SharedPreferences.getInstance();
+    // Si aún no hay PIN configurado
+    if (_pinAngie == null || _pinAngie!.isEmpty) {
+      _mostrarDialogoConfiguracionPins();
+      return;
+    }
 
-    if (_modoCreacion) {
-      if (!_confirmandoPin) {
-        // Primer paso de creación
-        setState(() {
-          _primerPinCreacion = _pinIngresado;
-          _pinIngresado = '';
-          _confirmandoPin = true;
-          _mensaje = 'Confirma tu PIN (ingrésalo de nuevo)';
-        });
-      } else {
-        // Segundo paso: confirmar
-        if (_pinIngresado == _primerPinCreacion) {
-          await prefs.setString('pin_seguridad', _pinIngresado);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: Colors.green,
-                content: Text('¡PIN configurado correctamente!'),
-              ),
-            );
-            _irAHome();
-          }
-        } else {
-          setState(() {
-            _error = true;
-            _pinIngresado = '';
-            _confirmandoPin = false;
-            _mensaje = 'Los PIN no coinciden. Intenta crear uno nuevo.';
-          });
-        }
-      }
+    if (_pinIngresado == _pinAngie) {
+      // Ingreso como Angie (acceso a todo)
+      _irAHome(usuario: 'angie');
+    } else if (_pinEsposo != null && _pinIngresado == _pinEsposo) {
+      // Ingreso como Esposo (solo casa y gastos)
+      _irAHome(usuario: 'esposo');
     } else {
-      // Verificación normal de PIN
-      if (_pinIngresado == _pinGuardado) {
-        _irAHome();
-      } else {
-        setState(() {
-          _error = true;
-          _pinIngresado = '';
-          _mensaje = 'PIN incorrecto. Intenta de nuevo.';
-        });
-      }
+      setState(() {
+        _error = true;
+        _pinIngresado = '';
+        _mensaje = 'PIN incorrecto. Intenta de nuevo.';
+      });
     }
   }
 
-  void _irAHome() {
+  void _irAHome({required String usuario}) {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => HomeScreen(usuario: usuario)),
+    );
+  }
+
+  void _mostrarDialogoConfiguracionPins() {
+    final angieCtrl = TextEditingController(text: _pinAngie ?? '');
+    final esposoCtrl = TextEditingController(text: _pinEsposo ?? '');
+
+    showDialog(
+      context: context,
+      barrierDismissible: _pinAngie != null,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(
+          children: [
+            Icon(Icons.security, color: Color(0xFF1E88E5)),
+            SizedBox(width: 8),
+            Text('Configurar PINs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Cada uno tendrá su propio PIN para entrar desde el celular:',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              // PIN de Angie
+              TextField(
+                controller: angieCtrl,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                decoration: const InputDecoration(
+                  labelText: 'PIN de Angie (Acceso a Todo)',
+                  helperText: 'Ve Casa, Gastos y sus Deudas privadas',
+                  prefixIcon: Icon(Icons.person, color: Color(0xFF1E88E5)),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // PIN del Esposo
+              TextField(
+                controller: esposoCtrl,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                decoration: const InputDecoration(
+                  labelText: 'PIN del Esposo',
+                  helperText: 'Solo ve Casa y Gastos (NO ve tus deudas)',
+                  prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A148C)),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          if (_pinAngie != null)
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1E88E5)),
+            onPressed: () async {
+              final pAngie = angieCtrl.text.trim();
+              final pEsposo = esposoCtrl.text.trim();
+
+              if (pAngie.length != 4) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('El PIN de Angie debe tener 4 números')),
+                );
+                return;
+              }
+
+              if (pEsposo.isNotEmpty) {
+                if (pEsposo.length != 4) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('El PIN del esposo debe tener 4 números')),
+                  );
+                  return;
+                }
+                if (pEsposo == pAngie) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Los dos PIN deben ser diferentes')),
+                  );
+                  return;
+                }
+              }
+
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('pin_angie', pAngie);
+              await prefs.setString('pin_seguridad', pAngie);
+              if (pEsposo.isNotEmpty) {
+                await prefs.setString('pin_esposo', pEsposo);
+              }
+
+              setState(() {
+                _pinAngie = pAngie;
+                _pinEsposo = pEsposo.isNotEmpty ? pEsposo : null;
+                _pinIngresado = '';
+                _error = false;
+                _mensaje = '¡PINs configurados! Digita tu PIN para entrar.';
+              });
+
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Guardar PINs'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -138,28 +233,27 @@ class _PinScreenState extends State<PinScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Icono de candado / casa
                   CircleAvatar(
-                    radius: 38,
+                    radius: 36,
                     backgroundColor: const Color(0xFF1E88E5).withValues(alpha: 0.12),
-                    child: const Icon(Icons.lock_person, size: 42, color: Color(0xFF1E88E5)),
+                    child: const Icon(Icons.home_work_outlined, size: 40, color: Color(0xFF1E88E5)),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   const Text(
-                    'Mis Cuentas Casa',
+                    'Cuentas del Hogar',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     _mensaje,
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: _error ? Colors.red.shade700 : Colors.grey.shade700,
+                      color: _error ? Colors.red.shade700 : Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // 4 Puntos indicadores del PIN
                   Row(
@@ -186,10 +280,19 @@ class _PinScreenState extends State<PinScreen> {
                       );
                     }),
                   ),
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 36),
 
                   // Teclado Numérico
                   _buildTecladoNumerico(),
+
+                  const SizedBox(height: 16),
+
+                  // Botón discreto para configurar o cambiar PINs
+                  TextButton.icon(
+                    icon: const Icon(Icons.tune, size: 18),
+                    label: const Text('Gestionar PINs (Angie / Esposo)'),
+                    onPressed: _mostrarDialogoConfiguracionPins,
+                  ),
                 ],
               ),
             ),
@@ -209,26 +312,26 @@ class _PinScreenState extends State<PinScreen> {
           ['', '0', 'DEL']
         ])
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: fila.map((item) {
                 if (item.isEmpty) {
-                  return const SizedBox(width: 72, height: 72);
+                  return const SizedBox(width: 68, height: 68);
                 }
                 if (item == 'DEL') {
                   return SizedBox(
-                    width: 72,
-                    height: 72,
+                    width: 68,
+                    height: 68,
                     child: IconButton(
-                      icon: const Icon(Icons.backspace_outlined, size: 28, color: Colors.black54),
+                      icon: const Icon(Icons.backspace_outlined, size: 26, color: Colors.black54),
                       onPressed: _onBorrar,
                     ),
                   );
                 }
                 return SizedBox(
-                  width: 72,
-                  height: 72,
+                  width: 68,
+                  height: 68,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
@@ -241,7 +344,7 @@ class _PinScreenState extends State<PinScreen> {
                     onPressed: () => _onNumeroPresionado(item),
                     child: Text(
                       item,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                   ),
                 );
