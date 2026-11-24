@@ -14,8 +14,15 @@ class CasaDetalleScreen extends StatefulWidget {
 }
 
 class _CasaDetalleScreenState extends State<CasaDetalleScreen> {
-  final _currencyFormat = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
-  final _dateFormat = DateFormat('dd-MMM-yy', 'es_CO');
+  final _currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
+
+  String _formatearFecha(DateTime fecha) {
+    const meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    final mes = meses[fecha.month - 1];
+    final ano = (fecha.year % 100).toString().padLeft(2, '0');
+    return '${fecha.day}-$mes-$ano';
+  }
+
   List<CuotaPlan> _cuotas = [];
   bool _isLoading = true;
   String _filtro = 'Todas'; // 'Todas', 'Pendientes', 'Pagadas'
@@ -101,7 +108,7 @@ class _CasaDetalleScreenState extends State<CasaDetalleScreen> {
         builder: (ctx, setDlgState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
-            'Cuota ${_dateFormat.format(cuota.fechaProgramada)}',
+            'Cuota ${_formatearFecha(cuota.fechaProgramada)}',
             style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF4A148C)),
           ),
           content: SingleChildScrollView(
@@ -357,7 +364,7 @@ class _CasaDetalleScreenState extends State<CasaDetalleScreen> {
                                   Expanded(
                                     flex: 3,
                                     child: Text(
-                                      _dateFormat.format(cuota.fechaProgramada),
+                                      _formatearFecha(cuota.fechaProgramada),
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
