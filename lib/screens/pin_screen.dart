@@ -82,10 +82,10 @@ class _PinScreenState extends State<PinScreen> {
     }
 
     if (_pinIngresado == _pinAngie) {
-      // Ingreso como Angie (acceso a todo)
-      _irAHome(usuario: 'angie');
+      // Ingreso como Angie
+      _irAHome(usuario: 'esposa');
     } else if (_pinEsposo != null && _pinIngresado == _pinEsposo) {
-      // Ingreso como Esposo (solo casa y gastos)
+      // Ingreso como yeferson
       _irAHome(usuario: 'esposo');
     } else {
       setState(() {
@@ -115,7 +115,10 @@ class _PinScreenState extends State<PinScreen> {
           children: [
             Icon(Icons.security, color: Color(0xFF1E88E5)),
             SizedBox(width: 8),
-            Text('Configurar PINs', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(
+              'Configurar PINs',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ],
         ),
         content: SingleChildScrollView(
@@ -151,7 +154,10 @@ class _PinScreenState extends State<PinScreen> {
                 decoration: const InputDecoration(
                   labelText: 'PIN del Esposo',
                   helperText: 'Solo ve Casa y Gastos (NO ve tus deudas)',
-                  prefixIcon: Icon(Icons.person_outline, color: Color(0xFF4A148C)),
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                    color: Color(0xFF4A148C),
+                  ),
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -165,14 +171,18 @@ class _PinScreenState extends State<PinScreen> {
               child: const Text('Cancelar'),
             ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: const Color(0xFF1E88E5)),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF1E88E5),
+            ),
             onPressed: () async {
               final pAngie = angieCtrl.text.trim();
               final pEsposo = esposoCtrl.text.trim();
 
               if (pAngie.length != 4) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('El PIN de Angie debe tener 4 números')),
+                  const SnackBar(
+                    content: Text('El PIN de Angie debe tener 4 números'),
+                  ),
                 );
                 return;
               }
@@ -180,13 +190,17 @@ class _PinScreenState extends State<PinScreen> {
               if (pEsposo.isNotEmpty) {
                 if (pEsposo.length != 4) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('El PIN del esposo debe tener 4 números')),
+                    const SnackBar(
+                      content: Text('El PIN del esposo debe tener 4 números'),
+                    ),
                   );
                   return;
                 }
                 if (pEsposo == pAngie) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Los dos PIN deben ser diferentes')),
+                    const SnackBar(
+                      content: Text('Los dos PIN deben ser diferentes'),
+                    ),
                   );
                   return;
                 }
@@ -233,15 +247,23 @@ class _PinScreenState extends State<PinScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: const Color(0xFF1E88E5).withValues(alpha: 0.12),
-                    child: const Icon(Icons.home_work_outlined, size: 40, color: Color(0xFF1E88E5)),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      width: 88,
+                      height: 88,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
                   const Text(
                     'Cuentas del Hogar',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -250,7 +272,9 @@ class _PinScreenState extends State<PinScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: _error ? Colors.red.shade700 : Colors.grey.shade600,
+                      color: _error
+                          ? Colors.red.shade700
+                          : Colors.grey.shade600,
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -269,11 +293,15 @@ class _PinScreenState extends State<PinScreen> {
                           shape: BoxShape.circle,
                           color: _error
                               ? Colors.red
-                              : (estaLleno ? const Color(0xFF1E88E5) : Colors.grey.shade300),
+                              : (estaLleno
+                                    ? const Color(0xFF1E88E5)
+                                    : Colors.grey.shade300),
                           border: Border.all(
                             color: _error
                                 ? Colors.red
-                                : (estaLleno ? const Color(0xFF1E88E5) : Colors.grey.shade400),
+                                : (estaLleno
+                                      ? const Color(0xFF1E88E5)
+                                      : Colors.grey.shade400),
                             width: 2,
                           ),
                         ),
@@ -309,7 +337,7 @@ class _PinScreenState extends State<PinScreen> {
           ['1', '2', '3'],
           ['4', '5', '6'],
           ['7', '8', '9'],
-          ['', '0', 'DEL']
+          ['', '0', 'DEL'],
         ])
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -324,7 +352,11 @@ class _PinScreenState extends State<PinScreen> {
                     width: 68,
                     height: 68,
                     child: IconButton(
-                      icon: const Icon(Icons.backspace_outlined, size: 26, color: Colors.black54),
+                      icon: const Icon(
+                        Icons.backspace_outlined,
+                        size: 26,
+                        color: Colors.black54,
+                      ),
                       onPressed: _onBorrar,
                     ),
                   );
@@ -344,7 +376,10 @@ class _PinScreenState extends State<PinScreen> {
                     onPressed: () => _onNumeroPresionado(item),
                     child: Text(
                       item,
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 );

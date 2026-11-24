@@ -110,19 +110,28 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.white,
         title: Row(
           children: [
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: _esAngie ? const Color(0xFFE3F2FD) : const Color(0xFFF3E5F5),
-              child: Icon(
-                _esAngie ? Icons.person : Icons.person_outline,
-                size: 20,
-                color: _esAngie ? const Color(0xFF1E88E5) : const Color(0xFF6A1B9A),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/logo.png',
+                width: 34,
+                height: 34,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              _esAngie ? 'Hola, Angie' : 'Hola, Esposo',
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 18),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cuentas de Casa',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 15),
+                ),
+                Text(
+                  _esAngie ? 'Perfil: Angie (Todo)' : 'Perfil: Esposo (Hogar)',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                ),
+              ],
             ),
           ],
         ),
