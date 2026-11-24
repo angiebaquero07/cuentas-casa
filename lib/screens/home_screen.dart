@@ -51,6 +51,44 @@ class _HomeScreenState extends State<HomeScreen> {
           .order('saldo_pendiente', ascending: false);
 
       final lista = (response as List).map((item) => Deuda.fromMap(item)).toList();
+
+      // Consultar plan_casa para asegurar que la casa SIEMPRE aparezca con sus datos reales
+      try {
+        final planResp = await Supabase.instance.client.from('plan_casa').select();
+        if ((planResp as List).isNotEmpty) {
+          double totalCasa = 175000000;
+          double pagadoCasa = 0;
+          for (var p in planResp) {
+            final mProg = (p['monto_programado'] as num?)?.toDouble() ?? 0.0;
+            final mPag = (p['monto_pagado'] as num?)?.toDouble() ?? 0.0;
+            final isPagado = p['pagado'] == true;
+            if (isPagado) {
+              pagadoCasa += (mPag > 0 ? mPag : mProg);
+            }
+          }
+          final saldoCasa = (totalCasa - pagadoCasa).clamp(0.0, double.infinity);
+          final casaId = planResp.first['deuda_id']?.toString() ?? 'casa-principal';
+
+          final casaDeuda = Deuda(
+            id: casaId,
+            nombre: 'Plan Casa Propia',
+            esCuotaCasa: true,
+            montoTotal: totalCasa,
+            saldoPendiente: saldoCasa,
+            cuotaMensual: 1500000,
+            diaPago: 1,
+            notas: 'Plan de 67 cuotas',
+          );
+
+          final idx = lista.indexWhere((d) => d.esCuotaCasa || d.id == casaId);
+          if (idx >= 0) {
+            lista[idx] = casaDeuda;
+          } else {
+            lista.insert(0, casaDeuda);
+          }
+        }
+      } catch (_) {}
+
       setState(() {
         _deudas = lista;
         _isLoading = false;
