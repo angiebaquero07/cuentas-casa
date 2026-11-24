@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/deuda.dart';
 import '../supabase_config.dart';
 import 'pin_screen.dart';
+import 'casa_detalle_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -625,11 +626,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF0D47A1),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
                 ),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text('Registrar Abono / Pago de Cuota', style: TextStyle(fontWeight: FontWeight.bold)),
-                onPressed: () => _mostrarDialogoAbono(casa),
+                icon: const Icon(Icons.table_chart),
+                label: const Text('Ver Plan de Pagos (67 cuotas)', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => CasaDetalleScreen(casa: casa)),
+                  );
+                  _cargarDeudas();
+                },
               ),
             ),
           ],
